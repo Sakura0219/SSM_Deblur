@@ -1,0 +1,137 @@
+name: EVSSM
+model_type: ImageRestorationModel
+scale: 1
+num_gpu: 1
+manual_seed: 42
+
+datasets:
+  train:
+    name: gopro-train
+    type: PairedImageDataset
+    dataroot_gt: datasets/GoPro/train/sharp_crops.lmdb
+    dataroot_lq: datasets/GoPro/train/blur_crops.lmdb
+
+    filename_tmpl: '{}'
+    io_backend:
+      type: lmdb
+
+    gt_size: 128
+    use_flip: true
+    use_rot: true
+
+    # === QUICK TEST CONFIGURATION ===
+    # Original full dataset: 2103 images
+    # max_samples: 2103  # Original: use all training images
+    max_samples: 256  # Quick test: use ~12% of training data
+    subset_seed: 42  # Ensure reproducibility for subset selection
+    # ================================
+
+    # data loader
+    use_shuffle: true
+    num_worker_per_gpu: 2
+    batch_size_per_gpu: 8
+    dataset_enlarge_ratio: 1
+    prefetch_mode: ~
+
+  val:
+    name: gopro-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/GoPro/test/GoPro/sharp_crops.lmdb
+    dataroot_lq: datasets/GoPro/test/GoPro/blur_crops.lmdb
+    io_backend:
+      type: lmdb
+
+    # === QUICK TEST CONFIGURATION ===
+    # Original full dataset: 1111 images
+    # max_samples: 1111  # Original: use all test images
+    max_samples: 80  # Quick test: use ~7% of test data
+    subset_seed: 42  # Ensure reproducibility
+    # ================================
+
+
+network_g:
+  type: EVSSM
+  inp_channels: 3
+  out_channels: 3
+  dim: 48
+  num_blocks: [6,6,12]
+  ffn_expansion_factor: 3
+  bias: False
+
+
+# path
+path:
+  pretrain_network_g:
+  strict_load_g:
+  resume_state:
+
+# training settings
+train:
+  optim_g:
+    type: AdamW
+    # === QUICK TEST CONFIGURATION ===
+    # lr: !!float 1e-3  # Original learning rate
+    lr: !!float 5e-4  # Reduced LR for smaller dataset
+    # ================================
+    
+    weight_decay: !!float 1e-3
+    betas: [0.9, 0.9]
+
+  scheduler:
+    type: TrueCosineAnnealingLR
+    # === QUICK TEST CONFIGURATION ===
+    # T_max: 300000  # Original: 300k iterations
+    T_max: 2000  # Quick test: 4k iterations (~15 epochs with 256 samples)
+    # ================================
+    eta_min: !!float 1e-7
+
+  # === QUICK TEST CONFIGURATION ===
+  # total_iter: 300000  # Original: 300k total iterations
+  total_iter: 2000  # Quick test: 4k iterations for rapid validation
+  # ================================
+  
+  warmup_iter: -1 # no warm up
+
+  # losses
+  pixel_opt:
+    type: L1Loss
+    loss_weight: 1.0
+    reduction: mean
+
+  fft_loss_opt:
+    type: FFTLoss
+    loss_weight: 0.1
+    reduction: mean
+
+# validation settings
+val:
+  # === QUICK TEST CONFIGURATION ===
+  # val_freq: !!float 1e3  # Original: validate every 1000 iterations
+  val_freq: 400  # Quick test: validate every 400 iterations (10 times during training)
+  # ================================
+  save_img: false
+
+
+  metrics:
+    psnr: # metric name, can be arbitrary
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false
+
+# logging settings
+logger:
+  print_freq: 100
+  save_checkpoint_freq: !!float 1e3
+  use_tb_logger: true
+  wandb:
+    project: ~
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29500

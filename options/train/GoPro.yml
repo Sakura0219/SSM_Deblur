@@ -43,11 +43,8 @@ network_g:
   num_blocks: [6,6,12]
   ffn_expansion_factor: 3
   bias: False
-  use_deconv: True     # 新增
+  
   use_spectral: False   # 新增
-  # use_frcm: True #新增
-  use_frcm: false        # 先关
-  frcm_start_iter: 5000  # 5k iter 后再开
 
 
 # path

@@ -438,14 +438,14 @@ class EVSSM(nn.Module):
         self.encoder_level2 = nn.Sequential()
         for i in range(num_blocks[1]):
             block = EVS(dim=dim * 2, ffn_expansion_factor=ffn_expansion_factor, bias=bias, att=True, idx=i,
-                        patch=192,use_spectral=use_spectralm)
+                        patch=192,use_spectral=use_spectral)
             self.encoder_level2.add_module(f"block{i}", block)
 
         self.down2_3 = Downsample(int(dim * 2 ** 1))
         self.encoder_level3 = nn.Sequential()
         for i in range(num_blocks[2]):
             block = EVS(dim=dim * 4, ffn_expansion_factor=ffn_expansion_factor, bias=bias, att=True, idx=i,
-                        patch=96,use_spectral=use_spectralm)
+                        patch=96,use_spectral=use_spectral)
             self.encoder_level3.add_module(f"block{i}", block)
 
         self.decoder_level3 = nn.Sequential()

@@ -43,8 +43,9 @@ network_g:
   num_blocks: [6,6,12]
   ffn_expansion_factor: 3
   bias: False
+  use_lkggf: True    # 启用LKGGF模块
+  use_mdfa: True     # 启用MDFA模块
   
-  use_spectral: False   # 新增
 
 
 # path
@@ -58,21 +59,19 @@ train:
   optim_g:
     type: AdamW
     # lr: !!float 1e-3
-    lr: !!float 3e-4
-    weight_decay: !!float 1e-3
-    
+    lr: !!float 6e-4        
+    weight_decay: !!float 1e-3  # 从1e-3降低到8e-4
     betas: [0.9, 0.9]
-    
 
   scheduler:
     type: TrueCosineAnnealingLR
-    T_max: 300000
+    T_max: 300000          # 从300000增加到400000
     eta_min: !!float 1e-7
 
-  total_iter: 300000
-  
+  total_iter: 300000     # 从300000增加到400000
+  # total_iter: 10000
   warmup_iter: -1 # no warm up
-  # warmup_iter: 1000 # 加上warmup稳定训练
+  # warmup_iter: 0
 
   # losses
   pixel_opt:
